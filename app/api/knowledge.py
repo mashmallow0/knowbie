@@ -28,6 +28,10 @@ INDEX_PATH = os.path.join(DATA_DIR, "index.json")
 
 # File upload security settings
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt', '.md', '.py', '.js', '.html', '.json', '.csv', '.zip'}
+BLOCKED_EXTENSIONS = {
+    '.exe', '.bat', '.sh', '.dll', '.bin', 
+    '.cmd', '.com', '.msi', '.apk', '.ipa'
+}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Ensure directories exist
@@ -309,8 +313,12 @@ async def upload_attachment(request: Request, item_id: str, file: UploadFile = F
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024*1024)}MB")
     
-    # Validate file extension
+    # Validate file extension - First check blocked extensions
     file_ext = Path(file.filename).suffix.lower()
+    if file_ext in BLOCKED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Executable files not allowed")
+    
+    # Then check allowed extensions
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=f"File type '{file_ext}' not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}")
     
