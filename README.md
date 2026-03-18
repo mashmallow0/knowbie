@@ -44,10 +44,15 @@ knowbie/
 │   ├── knowledge.csv        # Main data file
 │   ├── attachments/         # File uploads
 │   └── index.json           # Config & stats
+├── designs/                 # UI/UX designs (SVG, PNG)
 ├── docs/
 │   ├── flowchart.svg        # Architecture diagram
-│   └── knowbie-code-docs.md # Documentation
-├── designs/                 # UI/UX designs
+│   └── knowbie-code-docs.md # Code documentation
+├── reviews/
+│   └── knowbie-review-round-1.md  # Code review reports
+├── test-cases/
+│   ├── knowbie-test-report.md     # QA test reports
+│   └── evidence/            # Test screenshots
 └── requirements.txt
 ```
 
