@@ -2,17 +2,22 @@
 Knowledge API Routes - CRUD Operations
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
-from pydantic import BaseModel
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional, Literal
 from datetime import datetime
+from pathlib import Path
+from slowapi.util import get_remote_address
+from slowapi import Limiter
 import csv
 import os
 import json
 import uuid
-import shutil
+import mimetypes
+import fcntl
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,6 +25,10 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 CSV_PATH = os.path.join(DATA_DIR, "knowledge.csv")
 ATTACHMENTS_DIR = os.path.join(DATA_DIR, "attachments")
 INDEX_PATH = os.path.join(DATA_DIR, "index.json")
+
+# File upload security settings
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt', '.md', '.py', '.js', '.html', '.json', '.csv', '.zip'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Ensure directories exist
 os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
@@ -38,43 +47,94 @@ class KnowledgeItem(BaseModel):
 
 
 class KnowledgeCreate(BaseModel):
-    title: str
-    content: str
-    type: str
-    tags: str = ""
-    source: str = ""
+    title: str = Field(..., min_length=1, max_length=200, description="Title of the knowledge item")
+    content: str = Field(..., min_length=1, max_length=50000, description="Main content")
+    type: Literal["link", "code", "note", "image", "file", "idea"] = Field(..., description="Type of knowledge item")
+    tags: str = Field(default="", max_length=500, description="Comma-separated tags")
+    source: str = Field(default="", max_length=1000, description="Source URL or reference")
+
+    @validator('tags')
+    def validate_tags(cls, v):
+        if v:
+            tags = [t.strip() for t in v.split(',') if t.strip()]
+            if len(tags) > 20:
+                raise ValueError('Maximum 20 tags allowed')
+            if any(len(t) > 50 for t in tags):
+                raise ValueError('Each tag must be less than 50 characters')
+        return v
 
 
 class KnowledgeUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    type: Optional[str] = None
-    tags: Optional[str] = None
-    source: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    content: Optional[str] = Field(None, min_length=1, max_length=50000)
+    type: Optional[Literal["link", "code", "note", "image", "file", "idea"]] = None
+    tags: Optional[str] = Field(None, max_length=500)
+    source: Optional[str] = Field(None, max_length=1000)
+
+    @validator('tags')
+    def validate_tags(cls, v):
+        if v:
+            tags = [t.strip() for t in v.split(',') if t.strip()]
+            if len(tags) > 20:
+                raise ValueError('Maximum 20 tags allowed')
+            if any(len(t) > 50 for t in tags):
+                raise ValueError('Each tag must be less than 50 characters')
+        return v
 
 
 def read_csv():
-    """Read all knowledge items from CSV"""
+    """Read all knowledge items from CSV with file locking"""
     if not os.path.exists(CSV_PATH):
         return []
     
     items = []
     with open(CSV_PATH, 'r', newline='', encoding='utf-8') as f:
+        # Acquire shared lock for reading
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+        except (AttributeError, ImportError):
+            pass  # fcntl not available on Windows
+        
         reader = csv.DictReader(f)
         for row in reader:
             if row.get('id'):  # Skip empty rows
                 items.append(dict(row))
+        
+        # Release lock
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        except (AttributeError, ImportError):
+            pass
+    
     return items
 
 
 def write_csv(items):
-    """Write all knowledge items to CSV"""
+    """Write all knowledge items to CSV with file locking (atomic)"""
     fieldnames = ['id', 'title', 'content', 'type', 'tags', 'source', 'created_at', 'updated_at', 'vector_id']
     
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
+    # Write to a temporary file first for atomic operation
+    temp_path = CSV_PATH + '.tmp'
+    
+    with open(temp_path, 'w', newline='', encoding='utf-8') as f:
+        # Acquire exclusive lock for writing
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        except (AttributeError, ImportError):
+            pass
+        
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(items)
+        
+        # Release lock
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        except (AttributeError, ImportError):
+            pass
+    
+    # Atomic rename
+    os.replace(temp_path, CSV_PATH)
     
     # Update stats
     update_stats(len(items))
@@ -157,7 +217,8 @@ async def get_knowledge(item_id: str):
 
 
 @router.post("/")
-async def create_knowledge(item: KnowledgeCreate):
+@limiter.limit("30/minute")
+async def create_knowledge(request: Request, item: KnowledgeCreate):
     """Create a new knowledge item"""
     items = read_csv()
     
@@ -181,7 +242,8 @@ async def create_knowledge(item: KnowledgeCreate):
 
 
 @router.put("/{item_id}")
-async def update_knowledge(item_id: str, update: KnowledgeUpdate):
+@limiter.limit("30/minute")
+async def update_knowledge(request: Request, item_id: str, update: KnowledgeUpdate):
     """Update an existing knowledge item"""
     items = read_csv()
     
@@ -206,7 +268,8 @@ async def update_knowledge(item_id: str, update: KnowledgeUpdate):
 
 
 @router.delete("/{item_id}")
-async def delete_knowledge(item_id: str):
+@limiter.limit("20/minute")
+async def delete_knowledge(request: Request, item_id: str):
     """Delete a knowledge item"""
     items = read_csv()
     initial_count = len(items)
@@ -221,8 +284,9 @@ async def delete_knowledge(item_id: str):
 
 
 @router.post("/{item_id}/upload")
-async def upload_attachment(item_id: str, file: UploadFile = File(...)):
-    """Upload a file attachment for a knowledge item"""
+@limiter.limit("10/minute")
+async def upload_attachment(request: Request, item_id: str, file: UploadFile = File(...)):
+    """Upload a file attachment for a knowledge item with security validation"""
     items = read_csv()
     
     item = None
@@ -234,13 +298,41 @@ async def upload_attachment(item_id: str, file: UploadFile = File(...)):
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     
-    # Save file
-    file_ext = os.path.splitext(file.filename)[1]
-    safe_filename = f"{item_id}_{uuid.uuid4().hex[:8]}{file_ext}"
+    # Validate file exists
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    # Read file content
+    content = await file.read()
+    
+    # Validate file size
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024*1024)}MB")
+    
+    # Validate file extension
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"File type '{file_ext}' not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}")
+    
+    # Validate MIME type matches extension
+    mime_type, _ = mimetypes.guess_type(file.filename)
+    dangerous_mimes = {'application/x-msdownload', 'application/x-executable', 'application/x-sh'}
+    if mime_type in dangerous_mimes:
+        raise HTTPException(status_code=400, detail="Dangerous file type not allowed")
+    
+    # Generate safe filename (no original filename components)
+    safe_filename = f"{item_id}_{uuid.uuid4().hex[:16]}{file_ext}"
     file_path = os.path.join(ATTACHMENTS_DIR, safe_filename)
     
+    # Ensure path is within attachments directory (prevent path traversal)
+    real_attachments_dir = os.path.realpath(ATTACHMENTS_DIR)
+    real_file_path = os.path.realpath(file_path)
+    if not real_file_path.startswith(real_attachments_dir):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    
+    # Write file
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(content)
     
     # Update item source to point to file
     item['source'] = f"/data/attachments/{safe_filename}"
@@ -250,5 +342,6 @@ async def upload_attachment(item_id: str, file: UploadFile = File(...)):
     return {
         "message": "File uploaded successfully",
         "filename": safe_filename,
-        "path": f"/data/attachments/{safe_filename}"
+        "path": f"/data/attachments/{safe_filename}",
+        "size": len(content)
     }

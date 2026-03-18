@@ -137,7 +137,7 @@ const app = {
                     <div class="flex items-center justify-between">
                         <span class="text-xs text-primary">${timeAgo}</span>
                         ${item.tags ? `
-                            <span class="text-xs text-gray-400">${item.tags.split(',')[0]}</span>
+                            <span class="text-xs text-gray-400">${this.escapeHtml(item.tags.split(',')[0] || '')}</span>
                         ` : ''}
                     </div>
                 </div>
@@ -277,19 +277,24 @@ const app = {
                 ${item.tags ? `<div class="mt-4 flex flex-wrap gap-2">${this.renderTagsPills(item.tags)}</div>` : ''}
             `;
         } else if (item.type === 'link') {
+            const safeUrl = this.sanitizeUrl(item.content);
+            const displayUrl = this.escapeHtml(item.content);
             contentDiv.innerHTML = `
                 <h2 class="text-xl font-bold text-gray-800 mb-4">${this.escapeHtml(item.title)}</h2>
-                <a href="${item.content}" target="_blank" rel="noopener" 
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" 
                    class="link-preview block p-4 bg-gray-50 rounded-xl text-primary hover:underline break-all">
-                    🔗 ${item.content}
+                    🔗 ${displayUrl}
                 </a>
                 <p class="mt-4 text-gray-600">${this.escapeHtml(item.source || '')}</p>
                 ${item.tags ? `<div class="mt-4 flex flex-wrap gap-2">${this.renderTagsPills(item.tags)}</div>` : ''}
             `;
         } else if (item.type === 'image') {
+            const safeUrl = this.sanitizeUrl(item.content);
+            const altText = this.escapeHtml(item.title);
             contentDiv.innerHTML = `
                 <h2 class="text-xl font-bold text-gray-800 mb-4">${this.escapeHtml(item.title)}</h2>
-                <img src="${item.content}" alt="${item.title}" class="max-w-full rounded-xl">
+                ${safeUrl !== '#' ? `<img src="${safeUrl}" alt="${altText}" class="max-w-full rounded-xl" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <p class="text-red-500" style="display:none;">⚠️ Failed to load image</p>` : '<p class="text-red-500">⚠️ Invalid image URL</p>'}
                 ${item.tags ? `<div class="mt-4 flex flex-wrap gap-2">${this.renderTagsPills(item.tags)}</div>` : ''}
             `;
         } else {
@@ -470,9 +475,11 @@ const app = {
 
     // Render tags as pills
     renderTagsPills(tags) {
-        return tags.split(',').map(tag => `
-            <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">${tag.trim()}</span>
-        `).join('');
+        if (!tags) return '';
+        return tags.split(',').map(tag => {
+            const safeTag = this.escapeHtml(tag.trim());
+            return `<span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">${safeTag}</span>`;
+        }).join('');
     },
 
     // Detect programming language for syntax highlighting
@@ -501,9 +508,26 @@ const app = {
 
     // Escape HTML
     escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    },
+
+    // Validate URL
+    isValidUrl(string) {
+        try {
+            const url = new URL(string);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+            return false;
+        }
+    },
+
+    // Sanitize URL for display
+    sanitizeUrl(url) {
+        if (!url) return '#';
+        return this.isValidUrl(url) ? url : '#';
     },
 
     // Show toast notification

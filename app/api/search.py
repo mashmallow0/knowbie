@@ -3,9 +3,10 @@ Search API Routes - Semantic Search with Qdrant
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 import os
+import uuid
 
 # Optional imports - gracefully handle if not available
 try:
@@ -54,7 +55,11 @@ def get_qdrant():
         return None
     if _qdrant is None:
         try:
-            _qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+            _qdrant = QdrantClient(
+                host=QDRANT_HOST, 
+                port=QDRANT_PORT,
+                timeout=10  # Add timeout to prevent hanging
+            )
             # Ensure collection exists
             collections = _qdrant.get_collections().collections
             collection_names = [c.name for c in collections]
@@ -71,9 +76,9 @@ def get_qdrant():
 
 
 class SearchQuery(BaseModel):
-    query: str
-    limit: int = 10
-    type_filter: Optional[str] = None
+    query: str = Field(..., min_length=1, max_length=500, description="Search query text")
+    limit: int = Field(default=10, ge=1, le=50, description="Number of results to return")
+    type_filter: Optional[str] = Field(default=None, max_length=50, description="Filter by item type")
 
 
 class SearchResult(BaseModel):
