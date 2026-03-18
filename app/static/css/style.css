@@ -2,8 +2,206 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* CSS Variables for theming */
+:root {
+    /* Light theme (default) */
+    --bg-primary: #FEFCE8;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-modal: #ffffff;
+    --bg-hover: #f9fafb;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border-color: #e5e7eb;
+    --border-light: #f3f4f6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --nav-bg: rgba(255, 255, 255, 0.8);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --bg-modal: #1e293b;
+    --bg-hover: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --border-light: #1e293b;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --nav-bg: rgba(30, 41, 59, 0.8);
+}
+
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode specific overrides */
+[data-theme="dark"] .bg-cream {
+    background-color: var(--bg-primary) !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .text-gray-700 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .text-gray-500 {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .text-gray-600 {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .border-gray-100 {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .border-b {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] nav {
+    background-color: var(--nav-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .tag-btn:not(.active) {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .tag-btn:not(.active):hover {
+    border-color: #A78BFA !important;
+    color: #A78BFA !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .type-btn {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #search-results .hover\:bg-gray-50:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+[data-theme="dark"] #search-results .border-b {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .bg-gray-50 {
+    background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+    background-color: var(--bg-hover) !important;
+}
+
+[data-theme="dark"] .bg-gray-800 {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Dark mode toggle button */
+.theme-toggle {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--bg-hover);
+}
+
+.theme-toggle svg {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    position: absolute;
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle .moon-icon {
+    position: absolute;
+    opacity: 0;
+    transform: rotate(-90deg) scale(0);
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0);
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Dropdown styles for dark mode */
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 10px 25px var(--shadow-color) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+/* Toast in dark mode */
+[data-theme="dark"] #toast {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color);
 }
 
 /* Card hover effects */

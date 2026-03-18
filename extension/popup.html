@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 360px;
+      min-height: 400px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #FEFCE8 0%, #F3E8FF 100%);
+      padding: 16px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #A78BFA;
+    }
+
+    .logo {
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #6B7280;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      font-size: 13px;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #A78BFA;
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .type-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .type-btn {
+      padding: 8px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .type-btn:hover {
+      border-color: #A78BFA;
+    }
+
+    .type-btn.selected {
+      border-color: #A78BFA;
+      background: #F3E8FF;
+    }
+
+    .type-btn .icon {
+      font-size: 20px;
+      display: block;
+    }
+
+    .type-btn .label {
+      font-size: 10px;
+      color: #6B7280;
+      margin-top: 2px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #A78BFA, #8B5CF6);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #6B7280;
+      border: 1px solid #E5E7EB;
+    }
+
+    .btn-secondary:hover {
+      background: #F9FAFB;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: center;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: #ECFDF5;
+      color: #059669;
+    }
+
+    .status.error {
+      display: block;
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      padding: 8px;
+      background: white;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      border-color: #A78BFA;
+      background: #F3E8FF;
+    }
+
+    .recent-items {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #E5E7EB;
+    }
+
+    .recent-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6B7280;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .recent-item {
+      padding: 8px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .recent-item:hover {
+      background: #F3E8FF;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🧠</div>
+    <div class="title">Knowbie</div>
+    <div class="subtitle">Save to Knowledge Manager</div>
+  </div>
+
+  <div class="quick-actions">
+    <button class="quick-btn" onclick="capturePage()">📄 Save Page</button>
+    <button class="quick-btn" onclick="captureSelection()">📝 Selection</button>
+  </div>
+
+  <div class="form-group">
+    <label>Type</label>
+    <div class="type-selector">
+      <button class="type-btn selected" data-type="link" onclick="selectType('link')">
+        <span class="icon">🔗</span>
+        <span class="label">Link</span>
+      </button>
+      <button class="type-btn" data-type="note" onclick="selectType('note')">
+        <span class="icon">📝</span>
+        <span class="label">Note</span>
+      </button>
+      <button class="type-btn" data-type="code" onclick="selectType('code')">
+        <span class="icon">💻</span>
+        <span class="label">Code</span>
+      </button>
+      <button class="type-btn" data-type="idea" onclick="selectType('idea')">
+        <span class="icon">💡</span>
+        <span class="label">Idea</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="title">Title</label>
+    <input type="text" id="title" placeholder="Enter title...">
+  </div>
+
+  <div class="form-group">
+    <label for="content">Content</label>
+    <textarea id="content" placeholder="Enter content, URL, or code..."></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="tags">Tags (comma separated)</label>
+    <input type="text" id="tags" placeholder="ideas, coding, reference...">
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="openKnowbie()">Open App</button>
+    <button class="btn btn-primary" id="save-btn" onclick="saveToKnowbie()">Save 🧠</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

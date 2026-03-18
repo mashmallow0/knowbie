@@ -11,6 +11,7 @@ const app = {
     currentTypeFilter: '',
     currentItem: null,
     searchTimeout: null,
+    currentTheme: localStorage.getItem('knowbie-theme') || 'light',
 
     // Type configurations
     typeConfig: {
@@ -22,11 +23,351 @@ const app = {
         idea: { icon: '💡', color: 'bg-indigo-100 text-indigo-800', gradient: 'from-indigo-100 to-indigo-50' }
     },
 
+    // Templates
+    templates: {
+        meeting: {
+            type: 'note',
+            title: 'Meeting: [Topic] - [Date]',
+            content: `## Attendees
+- 
+
+## Agenda
+1. 
+
+## Notes
+- 
+
+## Action Items
+- [ ] 
+
+## Next Steps
+`,
+            tags: 'meeting, notes'
+        },
+        code: {
+            type: 'code',
+            title: '[Language] Snippet: [Description]',
+            content: `// Description of what this code does
+
+function example() {
+    // Your code here
+    
+}`,
+            tags: 'code, snippet'
+        },
+        book: {
+            type: 'note',
+            title: 'Book: [Title] by [Author]',
+            content: `## Summary
+Brief overview of the book...
+
+## Key Takeaways
+1. 
+2. 
+3. 
+
+## Quotes
+> "Memorable quote here"
+
+## Personal Notes
+My thoughts and reflections...
+
+## Rating: ⭐⭐⭐⭐⭐`,
+            tags: 'book, reading'
+        },
+        quick: {
+            type: 'note',
+            title: 'Quick Note: [Topic]',
+            content: `Note content here...`,
+            tags: 'quick'
+        }
+    },
+
     // Initialize app
     init() {
+        this.loadTheme();
         this.loadData();
         this.setupKeyboardShortcuts();
         this.updateStats();
+        this.setupExportMenuClose();
+    },
+
+    // ===== DARK MODE =====
+    loadTheme() {
+        const savedTheme = localStorage.getItem('knowbie-theme');
+        if (savedTheme) {
+            this.currentTheme = savedTheme;
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    },
+
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', this.currentTheme);
+        localStorage.setItem('knowbie-theme', this.currentTheme);
+        this.showToast(`Switched to ${this.currentTheme} mode`);
+    },
+
+    // ===== TEMPLATES =====
+    applyTemplate(templateKey) {
+        if (!templateKey || !this.templates[templateKey]) return;
+        
+        const template = this.templates[templateKey];
+        
+        // Set type
+        this.selectType(template.type);
+        document.getElementById('item-type').value = template.type;
+        
+        // Set other fields
+        document.getElementById('item-title').value = template.title;
+        document.getElementById('item-content').value = template.content;
+        document.getElementById('item-tags').value = template.tags;
+        
+        // Focus on title for editing
+        document.getElementById('item-title').focus();
+        document.getElementById('item-title').select();
+    },
+
+    // ===== EXPORT =====
+    toggleExportMenu() {
+        const menu = document.getElementById('export-menu');
+        menu.classList.toggle('hidden');
+        
+        // Enable/disable current item export based on selection
+        const currentMdBtn = document.getElementById('export-current-md');
+        const currentPdfBtn = document.getElementById('export-current-pdf');
+        
+        if (this.currentItem) {
+            currentMdBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            currentPdfBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            currentMdBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            currentPdfBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    },
+
+    setupExportMenuClose() {
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('export-dropdown');
+            const menu = document.getElementById('export-menu');
+            if (dropdown && !dropdown.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    },
+
+    async exportMarkdown(scope) {
+        this.toggleExportMenu();
+        
+        let itemsToExport = [];
+        if (scope === 'current' && this.currentItem) {
+            itemsToExport = [this.currentItem];
+        } else {
+            itemsToExport = this.items;
+        }
+        
+        if (itemsToExport.length === 0) {
+            this.showToast('No items to export', 'error');
+            return;
+        }
+        
+        const markdown = this.generateMarkdown(itemsToExport);
+        this.downloadFile(markdown, `knowbie-export-${new Date().toISOString().split('T')[0]}.md`, 'text/markdown');
+        this.showToast(`Exported ${itemsToExport.length} item(s) to Markdown`);
+    },
+
+    async exportPDF(scope) {
+        this.toggleExportMenu();
+        
+        let itemsToExport = [];
+        if (scope === 'current' && this.currentItem) {
+            itemsToExport = [this.currentItem];
+        } else {
+            itemsToExport = this.items;
+        }
+        
+        if (itemsToExport.length === 0) {
+            this.showToast('No items to export', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/knowledge/export/pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: itemsToExport })
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `knowbie-export-${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                this.showToast(`Exported ${itemsToExport.length} item(s) to PDF`);
+            } else {
+                // Fallback to print-to-PDF
+                this.exportPrintPDF(itemsToExport);
+            }
+        } catch (error) {
+            // Fallback to print-to-PDF
+            this.exportPrintPDF(itemsToExport);
+        }
+    },
+
+    exportPrintPDF(items) {
+        const printWindow = window.open('', '_blank');
+        const html = this.generatePDFHtml(items);
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+        this.showToast('PDF export opened in new tab');
+    },
+
+    generateMarkdown(items) {
+        const timestamp = new Date().toLocaleString();
+        let md = `# Knowbie Knowledge Export\n\n`;
+        md += `Generated: ${timestamp}\n\n`;
+        md += `Total Items: ${items.length}\n\n`;
+        md += `---\n\n`;
+        
+        items.forEach((item, index) => {
+            md += `## ${index + 1}. ${item.title}\n\n`;
+            md += `- **Type:** ${item.type}\n`;
+            md += `- **Tags:** ${item.tags || 'None'}\n`;
+            md += `- **Created:** ${item.created_at}\n`;
+            md += `- **Updated:** ${item.updated_at}\n\n`;
+            
+            if (item.type === 'code') {
+                md += `### Content\n\n\`\`\`\n${item.content}\n\`\`\`\n\n`;
+            } else if (item.type === 'link') {
+                md += `### Link\n\n[${item.content}](${item.content})\n\n`;
+            } else {
+                md += `### Content\n\n${item.content}\n\n`;
+            }
+            
+            if (item.source) {
+                md += `### Source\n\n${item.source}\n\n`;
+            }
+            
+            md += `---\n\n`;
+        });
+        
+        return md;
+    },
+
+    generatePDFHtml(items) {
+        const timestamp = new Date().toLocaleString();
+        let content = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Knowbie Export</title>
+    <style>
+        @page { margin: 2cm; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { color: #8B5CF6; border-bottom: 2px solid #8B5CF6; padding-bottom: 10px; }
+        h2 { color: #6B7280; margin-top: 30px; }
+        .meta { color: #6B7280; font-size: 0.9em; margin-bottom: 15px; }
+        .type-badge { 
+            display: inline-block; 
+            padding: 3px 10px; 
+            border-radius: 12px; 
+            font-size: 0.8em; 
+            background: #F3E8FF; 
+            color: #8B5CF6;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .link-box {
+            background: #f9fafb;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 4px solid #8B5CF6;
+        }
+        hr { border: none; border-top: 1px solid #e5e7eb; margin: 30px 0; }
+        .header { text-align: center; margin-bottom: 40px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 Knowbie Knowledge Export</h1>
+        <p class="meta">Generated: ${timestamp}</p>
+        <p class="meta">Total Items: ${items.length}</p>
+    </div>
+`;
+        
+        items.forEach((item, index) => {
+            const typeColors = {
+                link: '#F3E8FF',
+                code: '#ECFDF5',
+                note: '#FEF3C7',
+                image: '#FEE2E2',
+                file: '#FFF1F2',
+                idea: '#EEF2FF'
+            };
+            
+            content += `
+    <h2>${index + 1}. ${this.escapeHtml(item.title)}</h2>
+    <div class="meta">
+        <span class="type-badge" style="background: ${typeColors[item.type] || '#F3E8FF'}">${item.type}</span>
+        ${item.tags ? `<span>• Tags: ${this.escapeHtml(item.tags)}</span>` : ''}
+    </div>
+`;
+            
+            if (item.type === 'code') {
+                content += `    <div class="code-block">${this.escapeHtml(item.content)}</div>\n`;
+            } else if (item.type === 'link') {
+                content += `    <div class="link-box">🔗 <a href="${this.sanitizeUrl(item.content)}">${this.escapeHtml(item.content)}</a></div>\n`;
+            } else {
+                content += `    <p>${this.escapeHtml(item.content).replace(/\n/g, '<br>')}</p>\n`;
+            }
+            
+            if (item.source) {
+                content += `    <p class="meta"><strong>Source:</strong> ${this.escapeHtml(item.source)}</p>\n`;
+            }
+            
+            content += `    <hr>\n`;
+        });
+        
+        content += `
+</body>
+</html>`;
+        
+        return content;
+    },
+
+    downloadFile(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     },
 
     // Load all data
