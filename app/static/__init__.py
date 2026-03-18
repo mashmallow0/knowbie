@@ -1,0 +1,1 @@
+# Static module for Knowbie

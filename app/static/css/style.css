@@ -1,0 +1,149 @@
+/* Knowbie - Custom Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Card hover effects */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+}
+
+/* Brain float animation */
+.brain-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Fade in animation */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Type button selection */
+.type-btn {
+    transition: all 0.2s ease;
+}
+
+.type-btn.selected {
+    border-color: #A78BFA !important;
+    background-color: #F3E8FF;
+}
+
+.type-btn[data-type="code"].selected {
+    border-color: #6EE7B7 !important;
+    background-color: #ECFDF5;
+}
+
+.type-btn[data-type="note"].selected {
+    border-color: #FDBA74 !important;
+    background-color: #FEF3C7;
+}
+
+.type-btn[data-type="image"].selected {
+    border-color: #F9A8D4 !important;
+    background-color: #FEE2E2;
+}
+
+/* Tag button active state */
+.tag-btn {
+    transition: all 0.2s ease;
+}
+
+.tag-btn.active {
+    background-color: #A78BFA;
+    color: white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c4b5fd;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a78bfa;
+}
+
+/* Code block styling */
+pre {
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+code {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 0.875rem;
+}
+
+/* Link preview */
+.link-preview {
+    border-left: 3px solid #A78BFA;
+    padding-left: 12px;
+}
+
+/* Toast animation */
+#toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .card-hover:hover {
+        transform: translateY(-2px);
+    }
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Modal backdrop blur support */
+@supports not (backdrop-filter: blur(4px)) {
+    #add-modal,
+    #search-modal,
+    #view-modal {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+}

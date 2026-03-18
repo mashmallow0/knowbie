@@ -1,0 +1,8 @@
+# Knowledge CSV Schema
+id,title,content,type,tags,source,created_at,updated_at,vector_id
+
+# Type: link, code, note, image, file
+# Tags: comma-separated values
+# Source: URL or file path
+# created_at/updated_at: ISO format (YYYY-MM-DDTHH:MM:SS)
+# vector_id: Qdrant point ID for semantic search

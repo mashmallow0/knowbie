@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "name": "Knowbie Knowledge Manager",
+  "stats": {
+    "total_items": 0,
+    "total_tags": 0,
+    "last_updated": null
+  },
+  "settings": {
+    "items_per_page": 20,
+    "default_view": "grid",
+    "search_provider": "qdrant"
+  },
+  "qdrant": {
+    "collection_name": "knowbie_knowledge",
+    "vector_size": 384
+  }
+}
