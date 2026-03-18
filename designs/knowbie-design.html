@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowbie - Design Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#A78BFA',
+                        'primary-dark': '#8B5CF6',
+                        secondary: '#F9A8D4',
+                        accent: '#FDBA74',
+                        mint: '#6EE7B7',
+                        cream: '#FEFCE8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .card-hover:hover { transform: translateY(-4px); }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .brain-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    </style>
+</head>
+<body class="bg-cream min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center brain-float">
+                        <span class="text-xl">🧠</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-700">Knowbie</span>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="#" class="text-sm font-medium text-primary">All Items</a>
+                    <a href="#" class="text-sm font-medium text-gray-500 hover:text-primary">Tags</a>
+                    <a href="#" class="text-sm font-medium text-gray-500 hover:text-primary">Settings</a>
+                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Search Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex items-center gap-4">
+                <span class="text-gray-400 text-xl">🔍</span>
+                <input type="text" placeholder="Search your knowledge... (AI-powered semantic search)" 
+                       class="flex-1 text-gray-600 placeholder-gray-400 outline-none">
+                <span class="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">⌘K</span>
+            </div>
+        </div>
+
+        <!-- Tag Filters -->
+        <div class="flex flex-wrap gap-3 mb-8">
+            <button class="px-5 py-2 bg-primary text-white rounded-full text-sm font-medium">All</button>
+            <button class="px-5 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium hover:border-primary hover:text-primary">💡 Ideas</button>
+            <button class="px-5 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium hover:border-primary hover:text-primary">📎 Links</button>
+            <button class="px-5 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium hover:border-primary hover:text-primary">💻 Code</button>
+            <button class="px-5 py-2 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium hover:border-primary hover:text-primary">📄 Docs</button>
+            <button class="px-4 py-2 bg-white border border-gray-200 text-gray-400 rounded-full text-sm hover:border-primary">+</button>
+        </div>
+
+        <!-- Knowledge Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Link Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-purple-100 to-purple-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">🔗</span>
+                    <span class="bg-primary text-white text-xs font-medium px-3 py-1 rounded-full">Link</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">FastAPI Best Practices 2024</h3>
+                    <p class="text-sm text-gray-500 mb-4 line-clamp-2">A comprehensive guide to building production-ready APIs with FastAPI...</p>
+                    <span class="text-xs text-primary">github.com</span>
+                </div>
+            </div>
+
+            <!-- Code Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-emerald-100 to-emerald-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">💻</span>
+                    <span class="bg-mint text-emerald-800 text-xs font-medium px-3 py-1 rounded-full">Code</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">Docker Compose Template</h3>
+                    <p class="text-sm text-gray-500 mb-4 font-mono line-clamp-2">version: '3.8'
+
+services:
+  app:
+...</p>
+                    <span class="text-xs text-primary">Added 2 hours ago</span>
+                </div>
+            </div>
+
+            <!-- Note Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-amber-100 to-amber-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">📝</span>
+                    <span class="bg-accent text-amber-800 text-xs font-medium px-3 py-1 rounded-full">Note</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">Meeting Notes: Design Sync</h3>
+                    <p class="text-sm text-gray-500 mb-4 line-clamp-2">- New color palette approved
+- Timeline updated to Q2...</p>
+                    <span class="text-xs text-primary">Yesterday</span>
+                </div>
+            </div>
+
+            <!-- File Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-rose-100 to-rose-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">📎</span>
+                    <span class="bg-secondary text-rose-800 text-xs font-medium px-3 py-1 rounded-full">File</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">Q4 Roadmap.pdf</h3>
+                    <p class="text-sm text-gray-500 mb-4">2.4 MB • PDF Document</p>
+                    <span class="text-xs text-primary">Added 3 days ago</span>
+                </div>
+            </div>
+
+            <!-- Idea Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-indigo-100 to-indigo-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">💡</span>
+                    <span class="bg-indigo-400 text-white text-xs font-medium px-3 py-1 rounded-full">Idea</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">AI-powered Tag Suggestion</h3>
+                    <p class="text-sm text-gray-500 mb-4 line-clamp-2">Auto-suggest tags based on content analysis using embeddings...</p>
+                    <span class="text-xs text-primary">Added 1 week ago</span>
+                </div>
+            </div>
+
+            <!-- Image Card -->
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 card-hover cursor-pointer">
+                <div class="h-24 bg-gradient-to-br from-cyan-100 to-cyan-50 p-6 flex justify-between items-start">
+                    <span class="text-3xl">🖼️</span>
+                    <span class="bg-cyan-400 text-white text-xs font-medium px-3 py-1 rounded-full">Image</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-semibold text-gray-800 mb-2 line-clamp-1">Logo Concepts</h3>
+                    <p class="text-sm text-gray-500 mb-4">3 images • 2.1 MB</p>
+                    <span class="text-xs text-primary">Added yesterday</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Footer -->
+        <div class="mt-12 text-center">
+            <p class="text-sm text-gray-400">128 items • 24 tags • Last updated: 2 mins ago</p>
+        </div>
+    </div>
+
+    <!-- FAB Button -->
+    <button class="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-full shadow-lg shadow-primary/30 flex items-center justify-center text-white text-3xl hover:scale-110 transition-transform">
+        +
+    </button>
+
+    <!-- Design Specs Section -->
+    <div class="bg-white border-t border-gray-100 mt-16">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-8">🎨 Design Specifications</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-4">Color Palette</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-primary"></div>
+                            <div>
+                                <p class="text-sm font-medium">Primary</p>
+                                <p class="text-xs text-gray-500">#A78BFA (Purple)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-secondary"></div>
+                            <div>
+                                <p class="text-sm font-medium">Secondary</p>
+                                <p class="text-xs text-gray-500">#F9A8D4 (Pink)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-accent"></div>
+                            <div>
+                                <p class="text-sm font-medium">Accent</p>
+                                <p class="text-xs text-gray-500">#FDBA74 (Orange)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-mint"></div>
+                            <div>
+                                <p class="text-sm font-medium">Mint</p>
+                                <p class="text-xs text-gray-500">#6EE7B7 (Code)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-cream border"></div>
+                            <div>
+                                <p class="text-sm font-medium">Background</p>
+                                <p class="text-xs text-gray-500">#FEFCE8 (Cream)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-gray-700 mb-4">Typography</h3>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="text-gray-500">Font:</span> Inter, system-ui</p>
+                        <p><span class="text-gray-500">Headings:</span> 600 weight</p>
+                        <p><span class="text-gray-500">Body:</span> 400 weight, 15px</p>
+                        <p><span class="text-gray-500">Tags:</span> 500 weight, 13px</p>
+                    </div>
+
+                    <h3 class="font-semibold text-gray-700 mb-4 mt-6">Components</h3>
+                    <div class="space-y-2 text-sm">
+                        <p><span class="text-gray-500">Cards:</span> 16px radius, soft shadow</p>
+                        <p><span class="text-gray-500">Buttons:</span> 18px pill radius</p>
+                        <p><span class="text-gray-500">Inputs:</span> 10px radius</p>
+                        <p><span class="text-gray-500">FAB:</span> 64px, gradient</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 p-6 bg-gray-50 rounded-xl">
+                <h3 class="font-semibold text-gray-700 mb-4">Card Type Colors</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                        <span class="text-2xl">🔗</span>
+                        <p class="font-medium text-gray-700">Link</p>
+                        <p class="text-xs text-gray-500">Purple #F3E8FF</p>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                        <span class="text-2xl">💻</span>
+                        <p class="font-medium text-gray-700">Code</p>
+                        <p class="text-xs text-gray-500">Mint #ECFDF5</p>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                        <span class="text-2xl">📝</span>
+                        <p class="font-medium text-gray-700">Note</p>
+                        <p class="text-xs text-gray-500">Orange #FEF3C7</p>
+                    </div>
+                    <div class="bg-rose-50 p-4 rounded-lg border border-rose-100">
+                        <span class="text-2xl">📎</span>
+                        <p class="font-medium text-gray-700">File</p>
+                        <p class="text-xs text-gray-500">Pink #FEE2E2</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="font-semibold text-gray-700 mb-4">📱 Responsive Breakpoints</h3>
+                <div class="flex gap-4 text-sm">
+                    <div class="px-4 py-2 bg-gray-100 rounded-lg">Mobile: 1 col</div>
+                    <div class="px-4 py-2 bg-gray-100 rounded-lg">Tablet: 2 col</div>
+                    <div class="px-4 py-2 bg-primary text-white rounded-lg">Desktop: 4 col</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
