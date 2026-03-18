@@ -6,10 +6,23 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import os
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
-from sentence_transformers import SentenceTransformer
-import uuid
+
+# Optional imports - gracefully handle if not available
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams, PointStruct, FieldCondition, MatchValue
+    QDRANT_AVAILABLE = True
+except ImportError:
+    QDRANT_AVAILABLE = False
+    QdrantClient = None
+    Distance = VectorParams = PointStruct = FieldCondition = MatchValue = None
+
+try:
+    from sentence_transformers import SentenceTransformer
+    EMBEDDINGS_AVAILABLE = True
+except ImportError:
+    EMBEDDINGS_AVAILABLE = False
+    SentenceTransformer = None
 
 router = APIRouter()
 
@@ -27,6 +40,8 @@ _qdrant = None
 def get_model():
     """Lazy load the embedding model"""
     global _model
+    if not EMBEDDINGS_AVAILABLE:
+        return None
     if _model is None:
         _model = SentenceTransformer('all-MiniLM-L6-v2')
     return _model
@@ -35,6 +50,8 @@ def get_model():
 def get_qdrant():
     """Lazy load Qdrant client"""
     global _qdrant
+    if not QDRANT_AVAILABLE:
+        return None
     if _qdrant is None:
         try:
             _qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)

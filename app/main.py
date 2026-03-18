@@ -10,8 +10,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
+import sys
 
-from app.api import knowledge, search
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from app.api import knowledge, search
+except ImportError:
+    from api import knowledge, search
 
 app = FastAPI(
     title="Knowbie",
@@ -28,11 +35,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Determine base path for static/templates
+base_path = os.path.dirname(os.path.abspath(__file__))
+
 # Static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(base_path, "static")), name="static")
 
 # Templates
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=os.path.join(base_path, "templates"))
 
 # Include API routers
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
@@ -52,8 +62,14 @@ async def health_check():
 
 
 if __name__ == "__main__":
+    # Detect if running from app directory or project root
+    if os.path.basename(os.getcwd()) == "app":
+        module_path = "main:app"
+    else:
+        module_path = "app.main:app"
+    
     uvicorn.run(
-        "app.main:app",
+        module_path,
         host="0.0.0.0",
         port=8000,
         reload=True,
