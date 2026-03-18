@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Knowbie Extension Settings</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #FEFCE8 0%, #F3E8FF 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .subtitle {
+      color: #6B7280;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #E5E7EB;
+      border-radius: 12px;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #A78BFA;
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 6px;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #A78BFA, #8B5CF6);
+      color: white;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: #ECFDF5;
+      color: #059669;
+    }
+
+    .status.error {
+      display: block;
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+
+    .info-box {
+      background: #F3E8FF;
+      border-left: 4px solid #A78BFA;
+      padding: 16px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 24px;
+    }
+
+    .info-box h3 {
+      font-size: 14px;
+      color: #7C3AED;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      font-size: 13px;
+      color: #6B7280;
+    }
+
+    .info-box code {
+      background: rgba(255, 255, 255, 0.5);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12px;
+    }
+
+    .shortcut-list {
+      background: #F9FAFB;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+
+    .shortcut-key {
+      background: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+      border: 1px solid #E5E7EB;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🧠</div>
+      <div class="title">Knowbie Settings</div>
+      <div class="subtitle">Configure your extension</div>
+    </div>
+
+    <div class="info-box">
+      <h3>ℹ️ About</h3>
+      <p>This extension connects to your local Knowbie instance. Make sure Knowbie is running before using the extension.</p>
+    </div>
+
+    <div class="form-group">
+      <label for="api-url">Knowbie API URL</label>
+      <input type="text" id="api-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      <div class="hint">Default: http://localhost:8000. Change if your Knowbie runs on a different port.</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+
+    <div class="status" id="status"></div>
+
+    <div class="shortcut-list" style="margin-top: 32px;">
+      <h3 style="font-size: 14px; color: #374151; margin-bottom: 12px;">Context Menu Shortcuts</h3>
+      <div class="shortcut-item">
+        <span>Right-click on link → Save Link</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Right-click on selection → Save Selection</span>
+      </div>
+      <div class="shortcut-item">
+        <span>Right-click on page → Save Page</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load saved settings
+    document.addEventListener('DOMContentLoaded', async () => {
+      const result = await chrome.storage.sync.get(['knowbieApiUrl']);
+      if (result.knowbieApiUrl) {
+        document.getElementById('api-url').value = result.knowbieApiUrl;
+      }
+    });
+
+    // Save settings
+    async function saveSettings() {
+      const apiUrl = document.getElementById('api-url').value.trim();
+      
+      if (!apiUrl) {
+        showStatus('Please enter an API URL', 'error');
+        return;
+      }
+
+      try {
+        await chrome.storage.sync.set({ knowbieApiUrl: apiUrl });
+        showStatus('✅ Settings saved successfully!', 'success');
+      } catch (error) {
+        showStatus('❌ Failed to save settings', 'error');
+      }
+    }
+
+    // Show status
+    function showStatus(message, type) {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = `status ${type}`;
+
+      setTimeout(() => {
+        status.className = 'status';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

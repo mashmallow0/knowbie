@@ -2,7 +2,7 @@
 Knowledge API Routes - CRUD Operations
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Response
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Literal
 from datetime import datetime
@@ -15,6 +15,7 @@ import json
 import uuid
 import mimetypes
 import fcntl
+import html
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -353,3 +354,114 @@ async def upload_attachment(request: Request, item_id: str, file: UploadFile = F
         "path": f"/data/attachments/{safe_filename}",
         "size": len(content)
     }
+
+
+class ExportRequest(BaseModel):
+    items: List[KnowledgeItem]
+
+
+@router.post("/export/pdf")
+@limiter.limit("10/minute")
+async def export_pdf(request: Request, export_req: ExportRequest):
+    """Export knowledge items to PDF"""
+    try:
+        # Try to use weasyprint if available
+        try:
+            from weasyprint import HTML, CSS
+            from weasyprint.text.fonts import FontConfiguration
+            
+            html_content = generate_pdf_html(export_req.items)
+            font_config = FontConfiguration()
+            html = HTML(string=html_content)
+            pdf_bytes = html.write_pdf(font_config=font_config)
+            
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename=knowbie-export-{datetime.now().strftime('%Y%m%d')}.pdf"
+                }
+            )
+        except ImportError:
+            # Fallback: return HTML that can be printed to PDF
+            html_content = generate_pdf_html(export_req.items)
+            return Response(
+                content=html_content,
+                media_type="text/html",
+                headers={
+                    "Content-Disposition": f"attachment; filename=knowbie-export-{datetime.now().strftime('%Y%m%d')}.html"
+                }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+def generate_pdf_html(items: List[KnowledgeItem]) -> str:
+    """Generate HTML for PDF export"""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    type_colors = {
+        'link': ('#F3E8FF', '#8B5CF6'),
+        'code': ('#ECFDF5', '#059669'),
+        'note': ('#FEF3C7', '#D97706'),
+        'image': ('#FEE2E2', '#DC2626'),
+        'file': ('#FFF1F2', '#E11D48'),
+        'idea': ('#EEF2FF', '#4F46E5')
+    }
+    
+    items_html = ""
+    for idx, item in enumerate(items, 1):
+        bg_color, text_color = type_colors.get(item.type, ('#F3E8FF', '#8B5CF6'))
+        
+        # Content rendering based on type
+        if item.type == 'code':
+            content_html = f'<pre style="background:#1e293b;color:#e2e8f0;padding:15px;border-radius:8px;overflow-x:auto;font-family:monospace;font-size:0.9em;"><code>{html.escape(item.content)}</code></pre>'
+        elif item.type == 'link':
+            content_html = f'<div style="background:#f9fafb;padding:10px 15px;border-radius:8px;border-left:4px solid #8B5CF6;">🔗 <a href="{html.escape(item.content)}">{html.escape(item.content)}</a></div>'
+        else:
+            content_html = f'<p style="white-space:pre-wrap;">{html.escape(item.content)}</p>'
+        
+        source_html = f'<p style="color:#6B7280;font-size:0.9em;"><strong>Source:</strong> {html.escape(item.source)}</p>' if item.source else ''
+        tags_html = f'<span style="color:#6B7280;">• Tags: {html.escape(item.tags)}</span>' if item.tags else ''
+        
+        items_html += f"""
+        <div style="margin-bottom:40px;">
+            <h2 style="color:#374151;margin-top:30px;">{idx}. {html.escape(item.title)}</h2>
+            <div style="margin-bottom:15px;">
+                <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.8em;background:{bg_color};color:{text_color};text-transform:capitalize;">{item.type}</span>
+                {tags_html}
+            </div>
+            {content_html}
+            {source_html}
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:30px 0;">
+        </div>
+        """
+    
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Knowbie Export</title>
+    <style>
+        @page {{ margin: 2cm; }}
+        body {{ 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        h1 {{ color: #8B5CF6; border-bottom: 2px solid #8B5CF6; padding-bottom: 10px; }}
+        h2 {{ color: #6B7280; margin-top: 30px; }}
+    </style>
+</head>
+<body>
+    <div style="text-align:center;margin-bottom:40px;">
+        <h1>🧠 Knowbie Knowledge Export</h1>
+        <p style="color:#6B7280;">Generated: {timestamp}</p>
+        <p style="color:#6B7280;">Total Items: {len(items)}</p>
+    </div>
+    {items_html}
+</body>
+</html>"""
