@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  knowbie:
+    build: .
+    container_name: knowbie
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./data:/app/data
+      - ./data/attachments:/app/data/attachments
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+    restart: unless-stopped
+    networks:
+      - knowbie-network
+
+networks:
+  knowbie-network:
+    external: true
